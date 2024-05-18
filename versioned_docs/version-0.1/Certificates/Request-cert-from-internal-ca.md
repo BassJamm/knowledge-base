@@ -24,10 +24,7 @@ Generate a CSR from another server, doing this from IIS is a tried and tested me
 Enter the address of your CA followed by `/certsrv` for example `http://ca server name/certsrv` in the Address bar.
 :::
 
-3. Click Request a Certificate.
-
-![Internal-ca-001](@site/static/img/docs/Certificates/Internal-ca/internal-ca-001.jpeg)
-
+3. Click Request a Certificate. Navigate to your Certificate Authorities certsrv URL.
 4. Click submit an advanced certificate request.
 
 ![Internal-ca-002](@site/static/img/docs/Certificates/Internal-ca/internal-ca-002.jpeg)
