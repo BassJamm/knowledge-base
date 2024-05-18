@@ -53,6 +53,9 @@ const config = {
         },
         docs: {
           sidebarPath: './sidebars.js',
+          showLastUpdateTime: true,
+          includeCurrentVersion: true,
+          lastVersion: undefined,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
@@ -60,6 +63,7 @@ const config = {
         },
         blog: {
           showReadingTime: true,
+          showLastUpdateTime: true,
           blogSidebarTitle: 'Posts So Far',
           blogSidebarCount: 'ALL',
           readingTime: ({content, frontMatter, defaultReadingTime}) =>
@@ -80,7 +84,7 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'My Site',
+        title: 'WH KB',
         logo: {
           alt: 'My Site Logo',
           src: 'img/logo.svg',
@@ -90,9 +94,9 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
-            label: 'Tutorial',
+            label: 'Docs',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          {to: '/blog', label: 'Blogs and Tutorials', position: 'left'},
           {
             href: 'https://github.com/facebook/docusaurus',
             label: 'GitHub',

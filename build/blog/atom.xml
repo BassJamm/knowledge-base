@@ -2,98 +2,438 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://whkb.co.uk/blog</id>
     <title>WH KB Blog</title>
-    <updated>2021-08-26T00:00:00.000Z</updated>
+    <updated>2023-10-28T13:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://whkb.co.uk/blog"/>
     <subtitle>WH KB Blog</subtitle>
     <icon>https://whkb.co.uk/img/favicon.ico</icon>
     <entry>
-        <title type="html"><![CDATA[Welcome]]></title>
-        <id>https://whkb.co.uk/blog/welcome</id>
-        <link href="https://whkb.co.uk/blog/welcome"/>
-        <updated>2021-08-26T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Docusaurus blogging features are powered by the blog plugin.]]></summary>
-        <content type="html"><![CDATA[<p><a href="https://docusaurus.io/docs/blog" target="_blank" rel="noopener noreferrer">Docusaurus blogging features</a> are powered by the <a href="https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-blog" target="_blank" rel="noopener noreferrer">blog plugin</a>.</p>
-<p>Simply add Markdown files (or folders) to the <code>blog</code> directory.</p>
-<p>Regular blog authors can be added to <code>authors.yml</code>.</p>
-<p>The blog post date can be extracted from filenames, such as:</p>
+        <title type="html"><![CDATA[Backing up Resources in Azure]]></title>
+        <id>https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup</id>
+        <link href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup"/>
+        <updated>2023-10-28T13:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Pointers for setting up Azure Backup.]]></summary>
+        <content type="html"><![CDATA[<p>An outline of setting up Azure Backup and the decisions around doing so that I learn along the way.</p>
+<p>Azure Backup is a Microsoft Azure service that provides reliable and cost-effective data protection for your critical workloads. It enables you to securely back up and recover data from on-premises systems and Azure virtual machines, offering peace of mind for safeguarding your business-critical information.</p>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>It might not be the best way!</div><div class="admonitionContent_BuS1"><p>This document is for setting backup policeis for Virutal Machines only. If you need to backup other resources, go to section 1.2, step 4 and select a differnet resource.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="before-you-dive-in">Before you dive in<a href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup#before-you-dive-in" class="hash-link" aria-label="Direct link to Before you dive in" title="Direct link to Before you dive in">​</a></h2>
+<p>Some decisions to consider before clicking about and winging it:</p>
 <ul>
-<li><code>2019-05-30-welcome.md</code></li>
-<li><code>2019-05-30-welcome/index.md</code></li>
+<li>Policy Naming Conventions.</li>
+<li>How are you going to group your resources? (Don't care or different policies per resource type?)</li>
+<li>Backup Schedules.</li>
+<li>Alerting.</li>
 </ul>
-<p>A blog post folder can be convenient to co-locate blog post images:</p>
-<p><img decoding="async" loading="lazy" alt="Docusaurus Plushie" src="https://whkb.co.uk/assets/images/docusaurus-plushie-banner-a60f7593abca1e3eef26a9afa244e4fb.jpeg" width="1500" height="500" class="img_ev3q"></p>
-<p>The blog supports tags as well!</p>
-<p><strong>And if you don't want a blog</strong>: just delete this directory, and use <code>blog: false</code> in your Docusaurus config.</p>]]></content>
+<p>You'll need to setup the following:</p>
+<ul>
+<li>A resource Group.</li>
+<li>Service Recovery Services Vault.</li>
+<li>Log Analytics Workspace.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-run-down">The Run down<a href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup#the-run-down" class="hash-link" aria-label="Direct link to The Run down" title="Direct link to The Run down">​</a></h2>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_BuS1"><p>Use whatever naming conention fits in with what’s being used already, I am just suggesting something here.</p></div></div>
+<p>Below sections outline my steps for setting up Azure Backup.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="creating-the-resources">Creating the Resources<a href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup#creating-the-resources" class="hash-link" aria-label="Direct link to Creating the Resources" title="Direct link to Creating the Resources">​</a></h3>
+<ol>
+<li>Create the resource group, for example, <code>rg-customername-region-prod/dev-backups-01</code>.</li>
+<li>Create a recovery services vault to store the backups (GRS is the preferred option, LRS for lowest cost), for example, <code>rsv-customername-region-prod/dev-backup-01</code>.</li>
+<li>Create a log analytics workspace or reuse another one, for example, <code>la-customername-region-prod/dev-backup-01</code>.</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="configure-backup-policy">Configure Backup Policy<a href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup#configure-backup-policy" class="hash-link" aria-label="Direct link to Configure Backup Policy" title="Direct link to Configure Backup Policy">​</a></h3>
+<p>Configure the backup policy in-line with whatever standard is being used already, my suggestions are below.</p>
+<ol>
+<li>In the Azure portal, select a Recovery Services vault to back up the VM.</li>
+<li>Under Backup, select Backup Policies.</li>
+<li>Click +Add.</li>
+<li>On Select policy type, select Azure Virtual Machine.</li>
+<li>On Create policy, perform the following actions:</li>
+<li>Policy sub type: Standard</li>
+<li>Suggested Name format: <code>Bkup-policy-time of day-policy type</code> (example name: bkup-policy-nightly-std).</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="configure-alerting">Configure Alerting<a href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup#configure-alerting" class="hash-link" aria-label="Direct link to Configure Alerting" title="Direct link to Configure Alerting">​</a></h3>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>Note that this method is using the old backup alerting method, this is being replaced by Azure Monitor.</p></div></div>
+<p><a href="https://learn.microsoft.com/en-us/azure/backup/backup-azure-monitoring-built-in-monitor?tabs=recovery-services-vaults#turning-on-azure-monitor-alerts-for-job-failure-scenarios" target="_blank" rel="noopener noreferrer">Microsoft Link for more information</a></p>
+<p>Configure diagnostic logs to be sent from Azure Backup to the Log Anlytics workspace above.</p>
+<ol>
+<li>From the Recovery services vault just setup.</li>
+<li>Click on Backup Alerts, under the Monitoring section.</li>
+<li>Click Configure Notifications.</li>
+<li>Enable Notifications: Yes</li>
+<li>Recipients(Email): '<a href="mailto:monitoring@DomainName.com" target="_blank" rel="noopener noreferrer">monitoring@DomainName.com</a>'</li>
+<li>Notify: Hourly digest</li>
+<li>Severity: Critical &amp; Warning</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="configure-diagnostic-log-collection">Configure Diagnostic log collection<a href="https://whkb.co.uk/blog/Backing-up-resources-with-AzBackup#configure-diagnostic-log-collection" class="hash-link" aria-label="Direct link to Configure Diagnostic log collection" title="Direct link to Configure Diagnostic log collection">​</a></h3>
+<p>Configure diagnostic logs to be sent from Azure Backup to the Log Anlytics workspace above.</p>
+<ol>
+<li>Navigate to Diagnostic settings under Monitoring.</li>
+<li>Click Add Diagnostic Settings.</li>
+<li>Name your diagnostic setting, something informational, for example, “AzBkup-Diagnostics”, suggestion, Backup Report Data.</li>
+<li>Select Send to Log Analytics Workspace.</li>
+<li>Add a workspace and don’t touch any other settings.</li>
+<li>Hit Save.</li>
+</ol>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>Make sure to run the initial backup job from the Azure Backup Dashboard.</p></div></div>]]></content>
         <author>
-            <name>Sébastien Lorber</name>
-            <uri>https://sebastienlorber.com</uri>
-        </author>
-        <author>
-            <name>Yangshun Tay</name>
-            <uri>https://github.com/yangshun</uri>
-        </author>
-        <category label="facebook" term="facebook"/>
-        <category label="hello" term="hello"/>
-        <category label="docusaurus" term="docusaurus"/>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[MDX Blog Post]]></title>
-        <id>https://whkb.co.uk/blog/mdx-blog-post</id>
-        <link href="https://whkb.co.uk/blog/mdx-blog-post"/>
-        <updated>2021-08-01T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Blog posts support Docusaurus Markdown features, such as MDX.]]></summary>
-        <content type="html"><![CDATA[<p>Blog posts support <a href="https://docusaurus.io/docs/markdown-features" target="_blank" rel="noopener noreferrer">Docusaurus Markdown features</a>, such as <a href="https://mdxjs.com/" target="_blank" rel="noopener noreferrer">MDX</a>.</p>
-<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>Use the power of React to create interactive blog posts.</p><div class="language-js codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-js codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token operator" style="color:#393A34">&lt;</span><span class="token plain">button onClick</span><span class="token operator" style="color:#393A34">=</span><span class="token punctuation" style="color:#393A34">{</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token arrow operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token function" style="color:#d73a49">alert</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">'button clicked!'</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">}</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token maybe-class-name">Click</span><span class="token plain"> me</span><span class="token operator" style="color:#393A34">!</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token operator" style="color:#393A34">/</span><span class="token plain">button</span><span class="token operator" style="color:#393A34">&gt;</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div><button>Click me!</button></div></div>]]></content>
-        <author>
-            <name>Sébastien Lorber</name>
-            <uri>https://sebastienlorber.com</uri>
-        </author>
-        <category label="docusaurus" term="docusaurus"/>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Long Blog Post]]></title>
-        <id>https://whkb.co.uk/blog/long-blog-post</id>
-        <link href="https://whkb.co.uk/blog/long-blog-post"/>
-        <updated>2019-05-29T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[This is the summary of a very long blog post,]]></summary>
-        <content type="html"><![CDATA[<p>This is the summary of a very long blog post,</p>
-<p>Use a <code>&lt;!--</code> <code>truncate</code> <code>--&gt;</code> comment to limit blog post size in the list view.</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
-        <author>
-            <name>Endilie Yacop Sucipto</name>
-            <uri>https://github.com/endiliey</uri>
+            <name>Will</name>
+            <uri>https://github.com/BassJamm?tab=repositories</uri>
         </author>
         <category label="hello" term="hello"/>
-        <category label="docusaurus" term="docusaurus"/>
+        <category label="docusaurus-v2" term="docusaurus-v2"/>
     </entry>
     <entry>
-        <title type="html"><![CDATA[First Blog Post]]></title>
-        <id>https://whkb.co.uk/blog/first-blog-post</id>
-        <link href="https://whkb.co.uk/blog/first-blog-post"/>
-        <updated>2019-05-28T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet]]></summary>
-        <content type="html"><![CDATA[<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
+        <title type="html"><![CDATA[Automate Scripts in Azure]]></title>
+        <id>https://whkb.co.uk/blog/Automate-scripts-in-Azure</id>
+        <link href="https://whkb.co.uk/blog/Automate-scripts-in-Azure"/>
+        <updated>2023-10-27T15:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Setting up an Automation Account in Azure to script things.]]></summary>
+        <content type="html"><![CDATA[<p>In this post, are some steps for setting up an Automation account for running scripts against Azure AD. As well as lessons and tips I learnt along the way.</p>
+<p>Azure Automation Accounts are a cloud-based service in Microsoft Azure designed to simplify and streamline routine IT management tasks. They provide an efficient way to automate, schedule, and orchestrate repetitive processes, helping organizations save time, reduce errors, and improve operational efficiency.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="whats-my-goal-for-this">What's my goal for this?<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#whats-my-goal-for-this" class="hash-link" aria-label="Direct link to What's my goal for this?" title="Direct link to What's my goal for this?">​</a></h2>
+<p>My situation is this: I frequently receive requests to generate reports from Azure AD and Intune (Endpoint Manager). These requests occur on a monthly or, in some cases, a weekly basis, especially when there's an ongoing issue being troublshooted that impacts the reporting.</p>
+<p>Each time I get a report request, I have to log into the environment, execute my script, and send the report via email to the same suspects. While this process may not seem overly burdensome, the scripts are on my machine (archaic I know), I wrote them and I think, that noone else should have to be running them manually!</p>
+<p>To simplify this, I aim to automate the scripts on a monthly schedule and retain the flexibility to run them whenever needed.</p>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>The Information from here on out.</div><div class="admonitionContent_BuS1"><p>All of the informaiton below is from my setting this up for the 1st time and noting down what I have done and any issues I come across. If you want best practices etc, check out the Microsoft docs.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="outline">Outline<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#outline" class="hash-link" aria-label="Direct link to Outline" title="Direct link to Outline">​</a></h2>
+<div class="theme-admonition theme-admonition-danger admonition_xJq3 alert alert--danger"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M5.05.31c.81 2.17.41 3.38-.52 4.31C3.55 5.67 1.98 6.45.9 7.98c-1.45 2.05-1.7 6.53 3.53 7.7-2.2-1.16-2.67-4.52-.3-6.61-.61 2.03.53 3.33 1.94 2.86 1.39-.47 2.3.53 2.27 1.67-.02.78-.31 1.44-1.13 1.81 3.42-.59 4.78-3.42 4.78-5.56 0-2.84-2.53-3.22-1.25-5.61-1.52.13-2.03 1.13-1.89 2.75.09 1.08-1.02 1.8-1.86 1.33-.67-.41-.66-1.19-.06-1.78C8.18 5.31 8.68 2.45 5.05.32L5.03.3l.02.01z"></path></svg></span>Run As accounts deprecation</div><div class="admonitionContent_BuS1"><p>Run As accounts are being deprecated, managed identities are replacing this.</p></div></div>
+<ol>
+<li>Setup the Resource Group and Automation Account.</li>
+<li>Setup the Identity for the Automation Account, this is key to running scripts gainst Azure Active Directoy and Office 365 resources.</li>
+<li>Create ourselves a Runbook, that sits inside the Automation Account.</li>
+<li>Install the relevant modules for the code we want to run.</li>
+<li>Write ourselves a little script.</li>
+<li>Setup a schedule for the Runbook.</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="setup-the-resource-group-and-automation-account">Setup the Resource Group and Automation Account<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#setup-the-resource-group-and-automation-account" class="hash-link" aria-label="Direct link to Setup the Resource Group and Automation Account" title="Direct link to Setup the Resource Group and Automation Account">​</a></h2>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>Assumption of you "knowing what you are doing"</div><div class="admonitionContent_BuS1"><p>I (maybe wrongly so) am assuming you have setup Azure resources before and know the basics of this process.</p></div></div>
+<p>Before you charge into this part.</p>
+<p>Make sure you Select the same region as the resources you want to query, if the account is to query something else, like Azure AD or Office 365, the region is not so important. Also, have a good idea what your security requirments are for the Automation Account.</p>
+<p>Setup the Automation Account:</p>
+<ol>
+<li>Navigate to the Azure portal.</li>
+<li><strong>Search</strong> for Automation Account in the search bar.</li>
+<li>Select the <strong>Automation Account</strong> option, <strong>Click create</strong> in the middle of the screen <strong>or Click +Add</strong> in the top left.</li>
+<li>Fill in the necessary information.</li>
+</ol>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>When you Select the Advanced Tab</div><div class="admonitionContent_BuS1"><p>Here you can decide whether you want to use a System assigned or User Assigned Identity. Long story short, the System Assigned Identity can only be used by this one Automation Account, the User Assigned Identity can be used by multiple resources.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="apply-permissions-to-managedsystem-assigned-identity">Apply permissions to Managed(System assigned) Identity<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#apply-permissions-to-managedsystem-assigned-identity" class="hash-link" aria-label="Direct link to Apply permissions to Managed(System assigned) Identity" title="Direct link to Apply permissions to Managed(System assigned) Identity">​</a></h2>
+<p>You'll need to apply the permissions to the Managed Identity using PowerShell unfortunatly, a Microsoft seem to have decided to make this difficult for us!</p>
+<ul>
+<li><a href="https://aztoso.com/security/microsoft-graph-permissions-managed-identity/" target="_blank" rel="noopener noreferrer">Reference for where this came from</a></li>
+<li><a href="https://learn.microsoft.com/en-us/powershell/module/azuread/new-azureadserviceapproleassignment?view=azureadps-2.0" target="_blank" rel="noopener noreferrer">Microsoft reference for command</a>.</li>
+</ul>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>Role names</div><div class="admonitionContent_BuS1"><p>You'll need to find the correct role\permission name that you want to assign using the script below. <a href="https://learn.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0" target="_blank" rel="noopener noreferrer">Try this Microsoft doc for the Microosft Graph API permissions</a>.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-command">The command<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#the-command" class="hash-link" aria-label="Direct link to The command" title="Direct link to The command">​</a></h2>
+<p>The below is a script you can run but, you can run it line by line to see what is going on if that's more comfortable. The general gist is that you are applying the permissions from the Microsoft Graph App to your Managed Identity.</p>
+<p>Annotated the hell out of it as the script logic really confused me.</p>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>Heads up!</div><div class="admonitionContent_BuS1"><ul>
+<li>It takes a few minutes for this change to show in the GUI.</li>
+<li>If the permission already exists the prompt will error on the final command.</li>
+</ul></div></div>
+<div class="language-powershell codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-powershell codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv codeBlockLinesWithNumbering_o6Pm"><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Your tenant id.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$TenantID="Add your tenant ID"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Microsoft Graph App ID (DON'T CHANGE).</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$GraphAppId = "00000003-0000-0000-c000-000000000000"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Name of the manage identity (same as the Logic App name).</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$DisplayNameOfMSI="Add display name of Enterprise App" </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Check the Microsoft Graph documentation for the permission you need for the operation.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$PermissionName = "Add your permission here" </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Install the module (You need admin on the machine)</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">Install-Module AzureAD </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Connect to Azure AD via tenant ID, you'll need an admin account to login with though.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">Connect-AzureAD -TenantId $TenantID</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Collects the Target System Managed Identities information into the MSI variable.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$MSI = (Get-AzureADServicePrincipal -Filter "displayName eq '$DisplayNameOfMSI'")</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">Start-Sleep -Seconds 10</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Store the Microsoft Graph API informaiton into the GraphServicePrincipal variable.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$GraphServicePrincipal = Get-AzureADServicePrincipal -Filter "appId eq '$GraphAppId'"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Searches Microsoft Graph API for the value matching the PermissionName variable populated above and stores this in the AppRole Variable.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$AppRole = $GraphServicePrincipal.AppRoles |  Where-Object {$_.Value -eq $PermissionName -and $_.AllowedMemberTypes -contains "Application"}</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Assigned the permission from the Microsoft Graph API to the target Managed Identity.</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">New-AzureADServiceAppRoleAssignment -ObjectId $MSI.ObjectId -ResourceId $GraphServicePrincipal.ObjectId -Id $appRole.Id -PrincipalId $MSI.ObjectId</span></span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="setup-automation-runbook">Setup Automation Runbook<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#setup-automation-runbook" class="hash-link" aria-label="Direct link to Setup Automation Runbook" title="Direct link to Setup Automation Runbook">​</a></h2>
+<p>The Runbook is the container if you like for your script and anything that relates to the "task" of running it.</p>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>Runtime Version</div><div class="admonitionContent_BuS1"><p>Be extra careful of this, it cannot be changed after the fact and will limit the modules that will work with it to the runtime version you select (If that makes sense!).</p></div></div>
+<ol>
+<li>Sign in to the Azure portal.</li>
+<li><strong>Search for</strong> and Select <strong>Automation Accounts</strong>.</li>
+<li>On the Automation Accounts page, <strong>Select your Automation account</strong> from the list.</li>
+<li>From the Automation account, <strong>Select Runbooks</strong> under Process Automation to open the list of runbooks.</li>
+<li><strong>Click Create</strong> a runbook and fill in the information below.</li>
+<li>Click Create to create the runbook.</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="install-any-modules">Install any Modules<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#install-any-modules" class="hash-link" aria-label="Direct link to Install any Modules" title="Direct link to Install any Modules">​</a></h2>
+<p>Here we need to install any PowerShell modules we want to use with our Scripts; make sure they match the runtime of your Runbooks.</p>
+<ol>
+<li>Sign in to the Azure portal.</li>
+<li><strong>Search for</strong> and Select <strong>Automation Accounts</strong>.</li>
+<li>On the Automation Accounts page, <strong>Select your Automation account</strong> from the list.</li>
+<li>From the Automation account, <strong>Select Modules</strong> under Shared Resources.</li>
+<li>In here you can see a list of currently installed modules and you can add more by Clicking on the +Add a module button.</li>
+</ol>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>You may find that you have to search around a bit for the module that you do actually want and when you do find the module you want, search for the command that you want to use, sometimes the module name is right but, the command is missing!</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="test-script">Test Script<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#test-script" class="hash-link" aria-label="Direct link to Test Script" title="Direct link to Test Script">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="create-the-script">Create the Script<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#create-the-script" class="hash-link" aria-label="Direct link to Create the Script" title="Direct link to Create the Script">​</a></h3>
+<ol>
+<li>Navigate to your runbook.</li>
+<li><strong>Click Edit</strong> at the top.</li>
+<li>Here you can <strong>enter your script</strong>.</li>
+</ol>
+<p>Useful options on the left hand side to note:</p>
+<ul>
+<li><strong>CMDLETS</strong>, which you can use to find commands from the installed modules.</li>
+<li><strong>ASSETS</strong>, which will show you the various resources available to your runbooks which are saved within your automation account resource.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="test-script-1">Test Script<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#test-script-1" class="hash-link" aria-label="Direct link to Test Script" title="Direct link to Test Script">​</a></h3>
+<p>Once your done and ready to test.</p>
+<ol>
+<li><strong>Click on Test pane</strong> at the top.</li>
+<li><strong>Click Start</strong> in the top left to being running the scrpt.</li>
+</ol>
+<p>I found it really hard to get my head around how this works for some reason. So expect that this may take quite a few tries to get right.</p>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>Storage Account Keys</div><div class="admonitionContent_BuS1"><p>Before you can use the script as a base, you'll need to store the storage account key as a variable in your Automation account.</p><ol>
+<li>Open your <strong>Automation Account</strong>.</li>
+<li>Click on <strong>Variables</strong> under Shared Resources.</li>
+<li>Click <strong>Add a variable</strong>.</li>
+<li>Create a new <strong>string variable</strong>.</li>
+</ol><p>See the script for how to reference these in your runbooks.</p></div></div>
+<div class="language-powershell codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-powershell codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv codeBlockLinesWithNumbering_o6Pm"><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Ensures you do not inherit an AzContext in your runbook</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">Disable-AzContextAutosave -Scope Process | Out-Null</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">#Storage Account Information </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$StorageACCKey = Get-AutomationVariable -Name 'stgacckey01' </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$ContainerName = "Enter the blob container name"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Connect using a Managed Service Identity</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">try {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    Connect-AzAccount -Identity</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">}</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">catch{</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    Write-Output "Unable to login. Aborting."; </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    exit</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">}</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$Users = Get-AzADUser | Select-Object DisplayName, Id, Mail, UserPrincipalName</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">Write-Output $Users</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Exports the data in the $Users variable into a local environmental variable that will store the information whilst running in the Automation account. </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$Users | Export-Csv "$Env:temp\Users.csv" -notypeinformation</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Creates a new context to enable connection to the storage account. </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">$Context = New-AzureStorageContext -StorageAccountName "whautomationfiledump" -StorageAccountKey $StorageACCKey</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># This copes the csv file in the $Env:temp/MFAState.csv variable and copies it to the blob. </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">Set-AzureStorageBlobContent -Context $Context -Container $ContainerName -File "$Env:temp\Users.csv" -Blob "Users.csv" -force</span></span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>In my experience</div><div class="admonitionContent_BuS1"><p>The test window is not like a command promtp and will not output the commands running or anything at all apart from really confusing errors. Try to build error catching into your script, use the <code>try, catch</code> commands to write the errors to the promtp for debugging. More in this in the testing section at the bottom.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="setup-the-schedule">Setup the Schedule<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#setup-the-schedule" class="hash-link" aria-label="Direct link to Setup the Schedule" title="Direct link to Setup the Schedule">​</a></h2>
+<p>This has been mostly regurgitated from <a href="https://learn.microsoft.com/en-us/azure/automation/shared-resources/schedules#create-a-new-schedule-in-the-azure-portal" target="_blank" rel="noopener noreferrer">this Microsoft link here.</a></p>
+<ol>
+<li>From your Automation account, on the left-hand pane <strong>Select Schedules</strong> under Shared Resources.</li>
+<li>Select <strong>Add a schedule</strong>.</li>
+<li>Select whether the schedule runs once or on a reoccurring schedule by Selecting Once or Recurring.<!-- -->
+<ol>
+<li>If you Select Once, <strong>specify a start time</strong> and then <strong>Select Create</strong>.</li>
+<li>If you Select Recurring, <strong>specify a start time</strong>. For Recur every, <strong>Select how often</strong> you want the runbook to repeat. Select by hour, day, week, or month.</li>
+</ol>
+</li>
+<li><strong>Press Create</strong> to complete.</li>
+</ol>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>You must publish the runbook before you can assign the schedule to it.</p></div></div>
+<ol start="5">
+<li>Head back to your Runbook.</li>
+<li>Select <strong>Link to schedule</strong>at the top.</li>
+<li>Click the option to <strong>Link a schedule to your runbook</strong>,  <strong>Select the schedule</strong> you created from the list.</li>
+<li><strong>Click OK</strong> to complete.</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="testing">Testing<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#testing" class="hash-link" aria-label="Direct link to Testing" title="Direct link to Testing">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="testing-the-script">Testing the script<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#testing-the-script" class="hash-link" aria-label="Direct link to Testing the script" title="Direct link to Testing the script">​</a></h3>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="error-handling">Error handling<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#error-handling" class="hash-link" aria-label="Direct link to Error handling" title="Direct link to Error handling">​</a></h4>
+<p>The test pane window for the most part will not output useful errors or show you how the script is running. I'd suggest building error handling and status updates into your script if you wish during debugging, it will help immensely.</p>
+<p>An example of the <code>try, catch</code> command sytax is below.</p>
+<div class="language-powershell codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-powershell codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv codeBlockLinesWithNumbering_o6Pm"><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"># Connect using a Managed Service Identity</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">try {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    Connect-AzAccount -Identity</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">}</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">catch{</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    Write-Output "Unable to login. Aborting."; </span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    exit</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">}</span></span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>I'd also suggest using <code>write-output</code> all over the place to confirm progress and variables etc.</p>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>Shout out</div><div class="admonitionContent_BuS1"><p>Shout out to the VS code module for Automation Accounts, it'll let you pull down the runbook contents and edit in VsCode and upload it again. Highly recommend using this.</p></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="confirm-the-data-export">Confirm the data export<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#confirm-the-data-export" class="hash-link" aria-label="Direct link to Confirm the data export" title="Direct link to Confirm the data export">​</a></h3>
+<ol>
+<li>Navigate to your <strong>storage account</strong>.</li>
+<li>Click on the <strong>File shares or Containers option</strong>, wherever you saved your data to.</li>
+<li>Click into the share\container, <strong>find your file</strong> and Click on the <strong>3 dots</strong> to the right of it.</li>
+<li><strong>Click View\edit</strong>, it should display a basic output of the file.</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="further-notes">Further notes<a href="https://whkb.co.uk/blog/Automate-scripts-in-Azure#further-notes" class="hash-link" aria-label="Direct link to Further notes" title="Direct link to Further notes">​</a></h2>
+<ul>
+<li>Run As accounts are being deprecated, this method is by far the easiest to use when trying to pull info from AzureAD and Office 365.</li>
+</ul>]]></content>
         <author>
-            <name>Gao Wei</name>
-            <uri>https://github.com/wgao19</uri>
+            <name>Will</name>
+            <uri>https://github.com/BassJamm?tab=repositories</uri>
         </author>
-        <category label="hola" term="hola"/>
-        <category label="docusaurus" term="docusaurus"/>
+        <category label="Azure" term="Azure"/>
+        <category label="Automation" term="Automation"/>
+        <category label="Scripting" term="Scripting"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Azure ligthhouse Setup]]></title>
+        <id>https://whkb.co.uk/blog/Setup-Azure-Lighthouse</id>
+        <link href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse"/>
+        <updated>2023-10-21T13:00:00.000Z</updated>
+        <summary type="html"><![CDATA[The lesssons I have learned setting up Azure Ligthouse.]]></summary>
+        <content type="html"><![CDATA[<p>In this post, are the lessons learned when I first setup Azure Lighthouse as well as things I have picked up over the course of my year of using/supporting it within the company I work for.</p>
+<p>Azure Lighthouse serves as a central command hub for businesses and service providers in the Azure cloud. It simplifies the management of various Azure accounts, making it a breeze to oversee resources and services while boosting security and efficiency. Think of it as your go-to control center for all things Azure.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="online-reading">Online Reading<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#online-reading" class="hash-link" aria-label="Direct link to Online Reading" title="Direct link to Online Reading">​</a></h2>
+<p>Below are some links that are good reading before you dig into setting up the application.</p>
+<ul>
+<li><a href="https://learn.microsoft.com/en-us/azure/lighthouse/overview" target="_blank" rel="noopener noreferrer">Microsoft doc - What is Azure Lighthouse?</a>.</li>
+<li><a href="https://learn.microsoft.com/en-us/azure/lighthouse/how-to/onboard-customer" target="_blank" rel="noopener noreferrer">Microsoft doc - Onboard a customer to Azure Lighthouse</a>.</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="setup-guidance">Setup Guidance<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#setup-guidance" class="hash-link" aria-label="Direct link to Setup Guidance" title="Direct link to Setup Guidance">​</a></h2>
+<p>You've got some key areas to think about here before you get started, Azure AD and your Azure Lighthouse offering/delegation. Before you get cracking think about the following:</p>
+<blockquote>
+<p>These are all explained further down!</p>
+</blockquote>
+<p>Azure Active Directory:</p>
+<ul>
+<li>Are you going to create seperate groups per department.</li>
+<li>What is your naming convention going to be.</li>
+</ul>
+<p>Azure Lighthouse offering/delegation:</p>
+<ul>
+<li>Offering Naming Convention (Client will see this).</li>
+<li>Offering Description (Client will see this).</li>
+<li>Authorisations.</li>
+<li>Delegation Scopes (Subscription level or Resource Group Leve.)</li>
+</ul>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>My Opinions</div><div class="admonitionContent_BuS1"><p>I'd highly recommend reviewing the links mentioned in the Online Reading section for up to date information. The information following this point are from my notes.</p></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="azure-ad">Azure AD<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#azure-ad" class="hash-link" aria-label="Direct link to Azure AD" title="Direct link to Azure AD">​</a></h3>
+<p>To set things up, start by creating some groups within Azure AD. These groups will include the satff members who need access to the customer/client through Azure lighthouse. You have the flexibility to make these groups as detailed and numerous as needed.</p>
+<p>I recommend considering two key roles, these roles can be fine-tuned to meet your specific requirements:</p>
+<ul>
+<li><em>Azure Lighthouse Contributor</em></li>
+<li><em>Azure Lighthouse Reader</em></li>
+</ul>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>Role Assignment to staff business roles.</div><div class="admonitionContent_BuS1"><p>Initially, I attempted to set up separate groups for each department, such as Operations, Service Desk, and Finance. While this approach worked well for the technical teams, it didn't meet my expectations when it came to granting access to billing information for the Finance team. After extensive testing, I discovered that using direct or named accounts, or leveraging the Microsoft Partner Center, provided a more effective solution.</p></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="azure-lighthouse-offering">Azure Lighthouse Offering<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#azure-lighthouse-offering" class="hash-link" aria-label="Direct link to Azure Lighthouse Offering" title="Direct link to Azure Lighthouse Offering">​</a></h3>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="arm-template">ARM Template<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#arm-template" class="hash-link" aria-label="Direct link to ARM Template" title="Direct link to ARM Template">​</a></h4>
+<p>Below is an outline and suggestion for each relevant configurable options for the ARM template.</p>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>On-boarding multiple Subscriptions or Resource Groups for one client\customer.</div><div class="admonitionContent_BuS1"><p>You have the option to delegate multiple resource groups and subscriptions all at once from the Service Providers dashboard within the customer's tenant. While the documentation might imply otherwise, it is indeed possible and functional.</p></div></div>
+<h5 class="anchor anchorWithStickyNavbar_LWe7" id="offering-name">Offering Name<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#offering-name" class="hash-link" aria-label="Direct link to Offering Name" title="Direct link to Offering Name">​</a></h5>
+<p>When naming your offering, remember that it will be visible in your customer's tenant, so it's important that it looks good. I recommend using a format like this:</p>
+<ul>
+<li><code>Managing Company Name</code> Lighthouse Offering for <code>Customer Name</code> - <code>Subscription or Resource Group Name</code>.</li>
+</ul>
+<p>Be sure to replace the placeholders with the relevant details based on your naming convention.</p>
+<h5 class="anchor anchorWithStickyNavbar_LWe7" id="descriptions">Description(s)<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#descriptions" class="hash-link" aria-label="Direct link to Description(s)" title="Direct link to Description(s)">​</a></h5>
+<p>The description is customer-facing, so it should be clear and informative. Here's a suggested format:</p>
+<ul>
+<li><code>Managing Company Name</code> managed services offer for overseeing supported resources.</li>
+<li><code>Managing Company Name</code> offer for managing and overseeing project resources for <code>project or PO number</code>.</li>
+</ul>
+<h5 class="anchor anchorWithStickyNavbar_LWe7" id="delegation-scopes">Delegation Scope(s)<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#delegation-scopes" class="hash-link" aria-label="Direct link to Delegation Scope(s)" title="Direct link to Delegation Scope(s)">​</a></h5>
+<p>You have two options: <code>Subscription</code> and <code>Resource Group</code>. These choices are quite self-explanatory. However, it's important to note that you cannot change these after deployment, so be sure to select the one that suits your specific needs.</p>
+<h5 class="anchor anchorWithStickyNavbar_LWe7" id="authorisations">Authorisations<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#authorisations" class="hash-link" aria-label="Direct link to Authorisations" title="Direct link to Authorisations">​</a></h5>
+<p>Authorisations represent the roles you intend to assign to your pre-configured Azure AD groups. You have the flexibility to define these roles as either broad or specific, although I recommend a broader approach to minimize the need for creating or updating new delegations in the future.</p>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>Broader Authorisations</div><div class="admonitionContent_BuS1"><p>While this approach may sound appealing in theory, it's crucial to think about security. It may not be advisable if you are responsible for managing a small portion or a specific resource within your customer's environment. Additionally, consider the nature of your customer in this context.</p></div></div>
+<ul>
+<li><strong>Principal type</strong>: Group</li>
+<li><strong>Name</strong>: Choose one of the mentioned groups in the section above.</li>
+<li><strong>Display Name</strong>: Please do not edit. (This is the friendly name displayed in the customer's tenant, and it will default to the group name.)</li>
+<li><strong>Role</strong>: Assign the roles as indicated for the groups listed above.</li>
+<li><strong>Access Type</strong>: Permanent.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="arm-template-example">ARM template Example<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#arm-template-example" class="hash-link" aria-label="Direct link to ARM template Example" title="Direct link to ARM template Example">​</a></h3>
+<p>You can skip the initial lines until you locate <code>mspOfferName</code>. In the vicinity of this, you'll find the description field. To make changes, modify the <code>defaultValue:</code> data, not the <code>description:</code> information.</p>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>Confirming your scope</div><div class="admonitionContent_BuS1"><p>Locate the line <code>"$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",</code> and modify it to reflect either a subscription or resource deployment template, depending on your initial selection.</p></div></div>
+<p>Similar situation with the <code>mspOfferDescription:</code> as well.</p>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv codeBlockLinesWithNumbering_o6Pm"><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">"mspOfferName": {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   "type": "string",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   "metadata": {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "description": "Specify a unique name for your offer"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   },</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   "defaultValue": "My Company Lighthouse Contributor Offer for Customer Name - Subscription Name "</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  },</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain" style="display:inline-block"></span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  "mspOfferDescription": {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   "type": "string",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   "metadata": {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "description": "Name of the Managed Service Provider offering"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   },</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   "defaultValue": "My Company managed services offer to administer support resources."</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  }</span></span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>Locate the <code>variables:</code> section to define your group and the Azure role assignments.</p>
+<ul>
+<li><code>managedByTenantId"</code> - is your tenant or partner tenant ID.</li>
+<li><code>"authorizations":</code> - Are you Azure Roles assignments.</li>
+<li><code>"principalId"</code> - Is your object in the managing tenant.</li>
+<li><code>"roleDefinitionId"</code> - Is the Azure AD role you've assigned. In the case below, it's <code>Contributor</code> and the <code>Managed Services Registration assignment Delete</code> roles.</li>
+<li><code>"principalIdDisplayName"</code> - Is your friendly Group name, this will show in your customer tenant, it does not need to match the group name in the managing tenant.</li>
+</ul>
+<p>You'll see some of the information repeated for each role you assign to the same object in the managing tenant.</p>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv codeBlockLinesWithNumbering_o6Pm"><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">"variables": {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  "mspRegistrationName": "[guid(parameters('mspOfferName'))]",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  "mspAssignmentName": "[guid(parameters('mspOfferName'))]",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  "managedByTenantId": "Your tenant ID",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  "authorizations": [</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "principalId": "Your object in the managing tenant",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "roleDefinitionId": "Id-number-here",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "principalIdDisplayName": "Lighthouse Contributor"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   },</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   {</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "principalId": "Your object in the managing tenant",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "roleDefinitionId": "Id-number-here",</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">    "principalIdDisplayName": "Lighthouse Contributor"</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">   }</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain">  ]</span></span><br></span><span class="token-line codeLine_lJS_" style="color:#393A34"><span class="codeLineNumber_Tfdd"></span><span class="codeLineContent_feaV"><span class="token plain"> },</span></span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>You can edit the JSON template directly!</div><div class="admonitionContent_BuS1"><p>You don't need to always duck back into Azure Lighthouse to create the templates, you can just edit the JSON files if you're comfortable doing so.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="using-lighthouse">Using Lighthouse<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#using-lighthouse" class="hash-link" aria-label="Direct link to Using Lighthouse" title="Direct link to Using Lighthouse">​</a></h2>
+<p>After setting up and assigning your Lighthouse delegations to your staff, there's no specific action required to access Azure Lighthouse. It's consistently available. Below, we provide two methods to verify the status of your delegations.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="via-the-lighthouse-blade">Via the Lighthouse blade<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#via-the-lighthouse-blade" class="hash-link" aria-label="Direct link to Via the Lighthouse blade" title="Direct link to Via the Lighthouse blade">​</a></h3>
+<ol>
+<li>Open the <strong>Azure Management Portal</strong>.</li>
+<li>Search for <strong>Azure Lighthouse</strong>.</li>
+<li>Click on the <strong>Delegations</strong> option on the left-hand side, you may need to click manage my customers if you’ve no connections.</li>
+<li>You will then see your list of your customer’s subscriptions that you have access to.</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="via-the-subscriptions-blade">Via the subscriptions blade<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#via-the-subscriptions-blade" class="hash-link" aria-label="Direct link to Via the subscriptions blade" title="Direct link to Via the subscriptions blade">​</a></h3>
+<blockquote>
+<p>You'll need to show the customer in the subscription filter first though.</p>
+</blockquote>
+<ol>
+<li>Open the <strong>Azure Management Portal</strong>.</li>
+<li>Navigate to the <strong>Subscriptions blade</strong>.</li>
+<li>The list of subscriptions will also list the customer subscriptions you have access too.</li>
+<li>In the <strong>Azure portal</strong>, Select the <strong>Directory + subscriptions</strong> or <strong>Settings icon</strong> in the top right of the page.</li>
+<li>In the Directories + subscriptions settings page, ensure that the <strong>Advanced filters toggle is turned off</strong>.</li>
+<li>In the Default subscription filter section, <strong>select the appropriate directory</strong> and subscription.</li>
+</ol>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_BuS1"><p>If you have been granted access to one or more resource groups, rather than to an entire subscription, select the subscription to which that resource group belongs. You'll then work in the context of that subscription, but will only be able to access the designated resource group(s).</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="partner-earned-credit-pec-using-pal">Partner Earned Credit (PEC) using PAL<a href="https://whkb.co.uk/blog/Setup-Azure-Lighthouse#partner-earned-credit-pec-using-pal" class="hash-link" aria-label="Direct link to Partner Earned Credit (PEC) using PAL" title="Direct link to Partner Earned Credit (PEC) using PAL">​</a></h2>
+<p>PAL (Partner Admin Link) is how a partner can be recognized by Microsoft for their work in Azure on-behalf-of their customer.</p>
+<ul>
+<li><a href="https://learn.microsoft.com/en-us/azure/lighthouse/how-to/partner-earned-credit#associate-your-partner-id-when-you-onboard-new-customers" target="_blank" rel="noopener noreferrer">Microsoft doc - Associate your partner ID when you onboard new customers vai Lighthouse</a>.</li>
+<li><a href="https://learn.microsoft.com/en-us/partner-center/link-partner-id-for-azure-performance-pal-dpor#link-to-a-partnerid-with-pal" target="_blank" rel="noopener noreferrer">Microsoft doc - Link a PartnerID with PAL or DPOR for PAL</a></li>
+</ul>
+<p>To do this via Lighthouse, in a nutshell.</p>
+<ol>
+<li><a href="https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-authenticate-service-principal-powershell" target="_blank" rel="noopener noreferrer"><strong>Create a service principal</strong></a> user account in your managing tenant.</li>
+<li>Using that service principal account, <a href="https://learn.microsoft.com/en-us/azure/cost-management-billing/manage/link-partner-id#link-to-a-partner-id" target="_blank" rel="noopener noreferrer"><strong>link to your Associated Partner ID</strong></a> in your managing tenant.</li>
+<li>Include at least one authorization which includes the service principal Account as a user with an Azure built-in role that is eligible for PEC.</li>
+</ol>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>caution</div><div class="admonitionContent_BuS1"><p>This role must be granted as a permanent assignment, not as a just-in-time eligible authorization, in order for PEC to apply.</p></div></div>]]></content>
+        <author>
+            <name>Will</name>
+            <uri>https://github.com/BassJamm?tab=repositories</uri>
+        </author>
+        <category label="Azure" term="Azure"/>
+        <category label="Lighthouse" term="Lighthouse"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Microsoft Defender for Endpoint Woes]]></title>
+        <id>https://whkb.co.uk/blog/Defender-for-Endpoint-Woes</id>
+        <link href="https://whkb.co.uk/blog/Defender-for-Endpoint-Woes"/>
+        <updated>2023-08-05T11:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Windows services hating each other on Server 2012 R2.]]></summary>
+        <content type="html"><![CDATA[<p>For the last 3 months our monitoring team at my workplace has been spammed with alerts about the Windows Defender Advanced Threat Protection Service has entered the "stopped" state for one 2012 R2 server.</p>
+<p>Quickly followed about 6 minutes later with another alert saying, the service is okay.</p>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>Quick Social Plug</div><div class="admonitionContent_BuS1"><p>Check out my other post locations: -</p><ul>
+<li><a href="https://willh.hashnode.dev/" target="_blank" rel="noopener noreferrer">HashNode Link</a></li>
+</ul></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-investigation">The Investigation<a href="https://whkb.co.uk/blog/Defender-for-Endpoint-Woes#the-investigation" class="hash-link" aria-label="Direct link to The Investigation" title="Direct link to The Investigation">​</a></h2>
+<p>From checking the alert, I could see the service was stopping and starting but, no real reason as to why it was doing this. This is when I turned to PowerShell (<em>still unsure of why I did this over trusty Event Viewer, just seems to be my default now</em>).</p>
+<p>Quickly smashed out the below command to see what I could find.</p>
+<p>This promptly spat out these errors.</p>
+<p>After googling this (as any techy would), there are a lot of mentions of this error message all over the place with suggestions to do the following:-</p>
+<ol>
+<li>
+<p>Disable or uninstall any other AV products on the device.</p>
+</li>
+<li>
+<p>Run a Full system scan for viruses.</p>
+</li>
+<li>
+<p>Run a System File Checker scan from the command line, <code>sfc /scannow</code>.</p>
+</li>
+<li>
+<p>Re-install the Defender for Endpoint on that device.</p>
+</li>
+<li>
+<p>Update the OS to a new version (<em>A bit extreme mind you however, new OS versions have much better support for Defender, you don't need this service on Server 2016 and above, so it's still valid!</em>)</p>
+</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="what-solved-it">What Solved It<a href="https://whkb.co.uk/blog/Defender-for-Endpoint-Woes#what-solved-it" class="hash-link" aria-label="Direct link to What Solved It" title="Direct link to What Solved It">​</a></h2>
+<p>The short answer is, I'm not 100% certain.</p>
+<p>Our first port of call was to remove the <em>System Center Endpoint Protection</em> application, which we probably should have done before installing the <em>Defender for Endpoint</em> application to be honest.</p>
+<p>Secondly, we off-boarded the appliance from Defedner and then on-boarded it again by doing the following: -</p>
+<ul>
+<li>
+<p>Download the off-boarding script from your Defender portal.</p>
+<ul>
+<li>In the navigation pane, select Settings &gt; Endpoints &gt; Device management &gt; Offboarding.</li>
+</ul>
+</li>
+<li>
+<p>Off-Board the Server using the script provided by Microsoft below.</p>
+<ul>
+<li>
+<p><code>C:\Packages\Plugins\Microsoft.Azure.AzureDefenderForServers.MDE.Windows\versionNo\Install.ps1.</code></p>
+</li>
+<li>
+<p>The command is, <code>Install.ps1 -OffboardingScript .\WindowsDefenderATPOffboardingScript_valid_until_*.cmd</code></p>
+</li>
+</ul>
+</li>
+<li>
+<p>Reboot the server.</p>
+</li>
+<li>
+<p>Check the Defender application is gone from Programs and Features and that the Services are gone. If not, manually uninstall using Programs and Features.</p>
+</li>
+<li>
+<p>On-Board the server again using the script provided by Microsoft. Command below.</p>
+<ul>
+<li>
+<p><code>C:\Packages\Plugins\Microsoft.Azure.AzureDefenderForServers.MDE.Windows\versionNo\Install.ps1.</code></p>
+</li>
+<li>
+<p>The command is, <code>.\Install.ps1 -OnboardingScript .\WindowsDefenderATPOnboardingScript_valid_until_*.cmd</code></p>
+</li>
+</ul>
+</li>
+<li>
+<p>Reboot the server.</p>
+</li>
+</ul>
+<p>Hopefully this helps somone!</p>]]></content>
+        <author>
+            <name>Will</name>
+            <uri>https://github.com/BassJamm?tab=repositories</uri>
+        </author>
+        <category label="Defender" term="Defender"/>
+        <category label="Azure" term="Azure"/>
     </entry>
 </feed>
