@@ -5,7 +5,7 @@ title: Formats and Conversions
 sidebar_label: Formats & Converting
 sidebar_position: 3
 pagination_label: Request Cert from internal CA
-description: Requesting a Certificate from an Internal Certificate Authority.
+description: A run down of Certificate formats and Conversions.
 toc_max_heading_level: 4
 custom_edit_url:
 tags: [Certificates]
